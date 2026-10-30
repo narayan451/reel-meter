@@ -1,0 +1,7 @@
+{
+  "v": 1,
+  "reelPath": "/reels?/([A-Za-z0-9_-]{5,})",
+  "feedPath": "^/reels/",
+  "skipPath": "^/direct/",
+  "countAfterMs": 1500
+}

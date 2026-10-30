@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reel Meter</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="card">
+    <header class="top">
+      <div class="brand">
+        <img src="../icons/icon-32.png" width="20" height="20" alt="">
+        <span>Reel Meter</span>
+      </div>
+      <div class="seg" role="radiogroup" aria-label="Time window">
+        <button type="button" role="radio" data-hours="12">12h</button>
+        <button type="button" role="radio" data-hours="24">24h</button>
+      </div>
+    </header>
+
+    <section class="stats" aria-live="polite">
+      <div class="stat">
+        <div class="num" id="reels">0</div>
+        <div class="label" id="reels-label">reels in the last 24h</div>
+      </div>
+      <div class="stat">
+        <div class="num small" id="time">0m</div>
+        <div class="label">watching time</div>
+      </div>
+    </section>
+
+    <div class="spark" id="spark" role="img" aria-label="Reels per hour"></div>
+    <div class="spark-axis"><span id="axis-start">24h ago</span><span>now</span></div>
+
+    <section class="opts">
+      <label class="row">
+        <span>Show counter on Instagram</span>
+        <input type="checkbox" id="show-on-page" class="switch">
+      </label>
+      <label class="row">
+        <span>Pause tracking</span>
+        <input type="checkbox" id="paused" class="switch">
+      </label>
+    </section>
+
+    <p class="notice" id="notice" hidden>
+      Instagram changed something on their side, so counts may be low for a bit. A fix is on its way.
+    </p>
+
+    <button type="button" class="reset" id="reset">Reset counts</button>
+
+    <footer class="foot">
+      Saved only on this device. No chats, no reel names, nothing about you sent online.
+      <a class="maker" href="https://layalabs.netlify.app/?ref=reel-meter" target="_blank" rel="noopener noreferrer">
+        Made by <b>Laya Labs</b> &middot; see our other tools
+      </a>
+      <span class="ver" id="ver"></span>
+    </footer>
+  </main>
+  <script src="../lib/stats.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

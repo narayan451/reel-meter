@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reel Meter harness</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  Dev harness: a fake Instagram-like layout plus a stubbed chrome.* API, to see
+  the counter placement and counting without loading the extension.
+  Serve the repo root (python -m http.server 8799) and open /tests/harness.html
+-->
+<style>
+  body { margin: 0; background: #000; color: #fff; font: 14px Arial, sans-serif; }
+  nav { position: fixed; left: 0; top: 0; bottom: 0; width: 72px; border-right: 1px solid #262626; display: flex; flex-direction: column; gap: 24px; padding: 24px 0; align-items: center; }
+  nav a { width: 24px; height: 24px; background: #555; border-radius: 6px; display: block; }
+  main { margin-left: 72px; min-height: 100vh; display: flex; justify-content: center; align-items: center; gap: 12px; }
+  .reel { position: relative; }
+  video { display: block; height: 90vh; aspect-ratio: 9 / 16; background: #222; border-radius: 8px; }
+  .side { display: flex; flex-direction: column; gap: 18px; align-self: flex-end; margin-bottom: 40px; }
+  .side button { width: 32px; height: 32px; border-radius: 50%; border: 0; background: #444; }
+  #log { position: fixed; left: 80px; bottom: 6px; font: 11px monospace; color: #8f8; pointer-events: none; }
+</style>
+</head>
+<body>
+<nav><a href="#"></a><a href="#"></a><a href="#"></a><a href="#"></a></nav>
+<main>
+  <div class="reel"><video id="v" muted playsinline></video></div>
+  <div class="side"><button></button><button></button><button></button></div>
+</main>
+<div id="log"></div>
+<canvas id="c" width="90" height="160" hidden></canvas>
+<script>
+  // ---- stub of the chrome APIs the content script uses ----
+  const store = {};
+  const listeners = [];
+  window.__msgs = [];
+  function emit(changes) { listeners.forEach((fn) => fn(changes, 'local')); }
+  window.chrome = {
+    runtime: {
+      id: 'harness',
+      sendMessage(msg) {
+        window.__msgs.push(msg);
+        if (msg.t === 'add') {
+          const old = store.buckets;
+          store.buckets = ReelStats.add(store.buckets || {}, Date.now(), msg.reels, msg.seconds);
+          emit({ buckets: { oldValue: old, newValue: store.buckets } });
+        }
+        return Promise.resolve();
+      }
+    },
+    storage: {
+      local: {
+        get(keys) { const o = {}; [].concat(keys).forEach((k) => { if (k in store) o[k] = store[k]; }); return Promise.resolve(o); },
+        remove(k) { const ch = {}; [].concat(k).forEach((x) => { ch[x] = { oldValue: store[x] }; delete store[x]; }); emit(ch); return Promise.resolve(); },
+        set(obj) { const ch = {}; for (const k in obj) { ch[k] = { oldValue: store[k], newValue: obj[k] }; store[k] = obj[k]; } emit(ch); return Promise.resolve(); }
+      },
+      onChanged: { addListener(fn) { listeners.push(fn); } }
+    }
+  };
+
+  // ---- a playing video from a canvas ----
+  const c = document.getElementById('c');
+  const ctx = c.getContext('2d');
+  let f = 0;
+  setInterval(() => { ctx.fillStyle = `hsl(${(f++ * 4) % 360} 60% 40%)`; ctx.fillRect(0, 0, 90, 160); }, 50);
+  const v = document.getElementById('v');
+  v.srcObject = c.captureStream(20);
+  v.play();
+
+  window.goReel = (code) => history.pushState({}, '', '/reels/' + code + '/');
+  setInterval(() => {
+    const t = ReelStats.totals(store.buckets || {}, Date.now(), 24);
+    document.getElementById('log').textContent = location.pathname + ' | ' + t.reels + ' reels, ' + t.seconds + 's | msgs ' + window.__msgs.length;
+  }, 500);
+</script>
+<script src="../lib/stats.js"></script>
+<script src="../lib/rules.js"></script>
+<script src="../content/content.js"></script>
+</body>
+</html>
